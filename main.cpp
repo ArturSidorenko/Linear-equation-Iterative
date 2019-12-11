@@ -4,11 +4,13 @@ using namespace std;
 
 void plain_test();
 void straightforward_tests();
+void stopping_tests();
 
 int main() {
-	plain_test();
+	//plain_test();
 	try {
 		straightforward_tests();
+		stopping_tests();
 	}
 	catch (const std::out_of_range &r) {
 		cerr << "RANGEERR: " << r.what() << "\n";
@@ -47,13 +49,13 @@ void plain_test() {
 
 void straightforward_tests()
 {
-	cout << "straightforward_test\n";
+	cout << "\n\nstraightforward_test\n\n";
 	size_t n = 500;
-	matrix A = lagrange(n+1);
+	matrix A = lagrange(n + 1);
 	double h = 1. / (n + 1);
 	matrix x(n, 1); //proposed solution
 
-	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.1*i + 1);
+	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.5*i + 1);
 	matrix b = A * x; //proposed right hand of the equation
 
 	size_t ord = 64;
@@ -61,7 +63,80 @@ void straightforward_tests()
 	method_tau met(ord);
 
 	//naive order
-	for (size_t i = 0; i < ord; i++) met[i] = 1./cheb_grid(ord, i, 4, 4. / h / h);
+	for (size_t i = 0; i < ord; i++) met[i] = inv_cheb_grid(ord, i, 4, 4. / h / h);
+
+	matrix x0(n, 1); //zero vector
+
+	cout << "Naive approach\n";
+	cout << "Difference before: " << (x0 - x).linf_norm() << "\n";
+
+	matrix ans(n, 1);
+	try {
+		ans = test_n_steps_method(A, x0, b, met, x);
+	}
+	catch (const std::invalid_argument &ups) {
+		cerr << "ERROR while solving: " << ups.what() << "\n";
+		exit(-1);
+	}
+	double diff = (ans - x).linf_norm();
+	cout << "Differecnce after = " << diff << "\n";
+
+	//less naive order
+	cout << "Non-naive processing\n";
+	if (!(ord % 2)) for (size_t i = 0; i < (ord / 2); i++) {
+
+		met[2 * i] = inv_cheb_grid(ord, ord - i - 1, 4, 4. / h / h);
+		met[2 * i + 1] = inv_cheb_grid(ord, i, 4, 4. / h / h);
+	}
+
+	try {
+		ans = test_n_steps_method(A, x0, b, met, x);
+	}
+	catch (const std::invalid_argument &ups) {
+		cerr << "ERROR while solving: " << ups.what() << "\n";
+		exit(-1);
+	}
+	diff = (ans - x).linf_norm();
+	cout << "Differecnce in non-naive= " << diff << "\n";
+	ofstream f("ans1.txt");
+	ans.print(f);
+
+	//very clever processing
+
+	cout << "Clever case processing\n";
+
+	for (size_t i = 0; i < ord; i++) met[clever[i]] = inv_cheb_grid(ord, i, 4, 4. / h / h);
+
+	try {
+		ans = test_n_steps_method(A, x0, b, met, x);
+	}
+	catch (const std::invalid_argument &ups) {
+		cerr << "ERROR while solving: " << ups.what() << "\n";
+		exit(-1);
+	}
+	diff = (ans - x).linf_norm();
+	cout << "Differecnce in clever case= " << diff << "\n";
+	f = ofstream("ans2.txt");
+	ans.print(f);
+}
+
+void stopping_tests()
+{
+	cout << "\n\nstopping_time__test\n\n";
+	size_t n = 500;
+	matrix A = lagrange(n+1);
+	double h = 1. / (n + 1);
+	matrix x(n, 1); //proposed solution
+
+	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.5*i + 1);
+	matrix b = A * x; //proposed right hand of the equation
+
+	size_t ord = 64;
+	permut clever = clever_met(6);
+	method_tau met(ord);
+
+	//naive order
+	for (size_t i = 0; i < ord; i++) met[i] = inv_cheb_grid(ord, i, 4, 4. / h / h);
 	
 	matrix x0(n, 1); //zero vector
 
@@ -83,8 +158,8 @@ void straightforward_tests()
 	cout << "Non-naive processing\n";
 	if (!(ord % 2)) for (size_t i = 0; i < (ord / 2); i++) {
 		
-		met[2 * i] = 1. / cheb_grid(ord, ord - i - 1, 4, 4. / h / h);
-		met[2 * i + 1] = 1. / cheb_grid(ord, i, 4, 4. / h / h);
+		met[2 * i] = inv_cheb_grid(ord, ord - i - 1, 4, 4. / h / h);
+		met[2 * i + 1] = inv_cheb_grid(ord, i, 4, 4. / h / h);
 	}
 
 	try {
@@ -103,7 +178,7 @@ void straightforward_tests()
 
 	cout << "Clever case processing\n";
 
-	for (size_t i = 0; i < ord; i++) met[clever[i]] = 1. / cheb_grid(ord, ord - 1 - i, 4, 4. / h / h);
+	for (size_t i = 0; i < ord; i++) met[clever[i]] = inv_cheb_grid(ord, i, 4, 4. / h / h);
 
 	try {
 		ans = n_steps_method(A, x0, b, met);

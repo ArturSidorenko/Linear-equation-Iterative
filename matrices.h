@@ -14,6 +14,7 @@
 
 const double PI = 4 * atan(1);
 typedef std::vector<double> method_tau;
+typedef std::vector<double> sol_logs; //logs of system solving
 typedef std::vector<size_t> permut;
 
 /*
@@ -66,6 +67,7 @@ matrix lagrange(size_t N);
 
 //Chebyshev grid
 double cheb_grid(unsigned ord, unsigned i, double a, double b);
+double inv_cheb_grid(unsigned ord, unsigned k, double a, double b);
 
 //some n-steps method
 //it performs sonsecutive multiplications like (I-t*A)*X
@@ -74,7 +76,10 @@ double cheb_grid(unsigned ord, unsigned i, double a, double b);
 //A must be a square matrix and the number of rows of X must coincide with the size of A
 matrix n_steps_method(const matrix &A, const matrix &X, const matrix &B, const method_tau &t);
 
-bool break_loop(const matrix &A, const matrix &X, const matrix &B);
+//copy of the previous function to test convergence
+matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans);
+
+bool break_loop(const sol_logs &g);
 
 //very clever permutation of length = 2^t
 permut clever_met(size_t t);

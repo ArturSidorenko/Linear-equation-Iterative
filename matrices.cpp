@@ -239,29 +239,70 @@ double cheb_grid(unsigned ord, unsigned k, double a, double b)
 	return (a + b) * 0.5 + (b - a) * 0.5 * grid_van;
 }
 
+double inv_cheb_grid(unsigned ord, unsigned k, double a, double b) {
+	return 1. / cheb_grid(ord, k, a, b);
+}
+
 matrix n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t)
 {
 	matrix ans = X;
 	size_t ord = t.size();
-	std::cout << "Size of the array = " << ord << "\n";
+	sol_logs logs;
+	double res;
+
+	std::cout << "    Size of the array of taus = " << ord << "\n";
+
 	for (int g = 1; ; g++) {
 		for (size_t i = 0; i < ord; i++) {
 			ans = ans - t[i] * A * ans + t[i] * B; //(I - t*A)*x + t*b
 		}
-		//if (!(g % 20)) std::cout << "g = " << g << ", residual = " << (A*ans - B).linf_norm() << "\n";
 
 		if (!(g % 100)) {
-			std::cout << "Iteration #" << g << ",res = " << (A*ans - B).linf_norm() << "\n";
-			if (break_loop(A, ans, B)) break;
-			if (g > 1000) break;
+			res = (A * ans - B).linf_norm();
+			std::cout << "    Iteration #" << g << ",res = " << res << "\n";
+			logs.push_back(res);
+			if (break_loop(logs)) break;
+			if (g > 2000) break;
 		}
 	}
 	return ans;
 }
 
-bool break_loop(const matrix &A, const matrix &X, const matrix &B) {
-	double res = (A*X - B).linf_norm();
-	return (res < 5e-6) || (res > 1e+15);
+matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans)
+{
+	matrix ans = X;
+	size_t ord = t.size();
+	sol_logs logs;
+	double diff;
+
+	std::cout << "    Size of the array of taus = " << ord << "\n";
+
+	for (int g = 1; ; g++) {
+		for (size_t i = 0; i < ord; i++) {
+			ans = ans - t[i] * A * ans + t[i] * B; //(I - t*A)*x + t*b
+		}
+
+		if (!(g % 100)) {
+			diff = (ans - true_ans).linf_norm();
+			std::cout << "    Iteration #" << g << ",L_inf diff = " << diff << "\n";
+			logs.push_back(diff);
+	
+			if ((g > 2000) || (diff < 10e-12) || (diff > 10e+16)) break;
+		}
+	}
+	return ans;
+}
+
+bool break_loop(const sol_logs &g) {
+	
+	size_t s = g.size();
+	double cur = g[s-1];
+	if (cur > 1e+15) return true;
+
+	if (s < 6) return false; //to avoid multiple errors caused by to lack of data to alanyse
+	double a = (g[s - 2] + g[s - 3] + g[s - 4]) / 3; //rolling average
+	return (s > 0.95 * a);
+
 }
 
 permut clever_met(size_t t) {
