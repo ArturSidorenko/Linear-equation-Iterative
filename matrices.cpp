@@ -161,10 +161,15 @@ void matrix::print(std::ofstream &s) const {
 	s << "\n============================\n";
 	for (size_t i = 0; i < rows_; i++) {
 		for(size_t j =0; j < cols_; j++)
-			s << std::setw(10) << data_[j][i] << " "; 
+                        s << std::setw(10) << std::left << std::setprecision(2) << data_[j][i] << " ";
 		s << "\n";
 	}
 	s << "============================\n";
+}
+
+void matrix::print(const std::string &s) const {
+    std::ofstream f(s);
+    print(f);
 }
 
 double matrix::l1_norm() const
@@ -183,7 +188,8 @@ double matrix::l1_norm() const
 	for (size_t j = 1; j < cols_; j++)
 		if (c < maxes[j]) c = maxes[j];
 
-	return c;
+        delete [] maxes;
+        return c;
 }
 
 double matrix::linf_norm() const
@@ -202,6 +208,8 @@ double matrix::linf_norm() const
 	for (size_t i = 1; i < rows_; i++)
 		if (c < maxes[i]) c = maxes[i];
 
+
+        delete [] maxes;
 	return c;
 }
 
@@ -252,7 +260,7 @@ matrix n_steps_method(const matrix & A, const matrix & X, const matrix &B, const
 
 	std::cout << "    Size of the array of taus = " << ord << "\n";
 
-	for (int g = 1; ; g++) {
+        for (int g = 1; ; g++) {
 		for (size_t i = 0; i < ord; i++) {
 			ans = ans - t[i] * A * ans + t[i] * B; //(I - t*A)*x + t*b
 		}
@@ -262,7 +270,7 @@ matrix n_steps_method(const matrix & A, const matrix & X, const matrix &B, const
 			std::cout << "    Iteration #" << g << ",res = " << res << "\n";
 			logs.push_back(res);
 			if (break_loop(logs)) break;
-			if (g > 2000) break;
+                        if (g > 2) break;
 		}
 	}
 	return ans;
@@ -287,7 +295,7 @@ matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, 
 			std::cout << "    Iteration #" << g << ",L_inf diff = " << diff << "\n";
 			logs.push_back(diff);
 	
-			if ((g > 2000) || (diff < 10e-12) || (diff > 10e+16)) break;
+                        if ((g > 10) || (diff < 10e-12) || (diff > 1e+15)) break;
 		}
 	}
 	return ans;
@@ -297,7 +305,7 @@ bool break_loop(const sol_logs &g) {
 	
 	size_t s = g.size();
 	double cur = g[s-1];
-	if (cur > 1e+15) return true;
+        if (cur > 1e+15) return true;
 
 	if (s < 6) return false; //to avoid multiple errors caused by to lack of data to alanyse
 	double a = (g[s - 2] + g[s - 3] + g[s - 4]) / 3; //rolling average
@@ -314,7 +322,7 @@ permut clever_met(size_t t) {
 	else {
 		permut beg = clever_met(t - 1);
 		permut adv(beg.size() * 2);
-		for (int i = 0; i < beg.size(); i++) {
+                for (size_t i = 0; i < beg.size(); i++) {
 			adv[2 * i] = beg[i];
 			adv[2 * i + 1] = adv.size() - beg[i] - 1;
 		}

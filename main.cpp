@@ -5,6 +5,13 @@ using namespace std;
 void plain_test();
 void straightforward_tests();
 void stopping_tests();
+double max_norm_val(double a, double b, const method_tau &t) ;
+matrix perebor(double a, double b, const method_tau &t) ;
+
+
+//to estimate norms
+double sf(double x, double tau);
+double cumsf(double x, const method_tau &t);
 
 int main() {
 	//plain_test();
@@ -50,7 +57,7 @@ void plain_test() {
 void straightforward_tests()
 {
 	cout << "\n\nstraightforward_test\n\n";
-	size_t n = 500;
+        size_t n = 200;
 	matrix A = lagrange(n + 1);
 	double h = 1. / (n + 1);
 	matrix x(n, 1); //proposed solution
@@ -58,8 +65,8 @@ void straightforward_tests()
 	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.5*i + 1);
 	matrix b = A * x; //proposed right hand of the equation
 
-	size_t ord = 64;
-	permut clever = clever_met(6);
+        permut clever = clever_met(4);
+        size_t ord = clever.size();
 	method_tau met(ord);
 
 	//naive order
@@ -69,6 +76,9 @@ void straightforward_tests()
 
 	cout << "Naive approach\n";
 	cout << "Difference before: " << (x0 - x).linf_norm() << "\n";
+
+        //norm research
+        perebor(4, 4./h/h, met).print("norms_naive.txt");
 
 	matrix ans(n, 1);
 	try {
@@ -101,6 +111,9 @@ void straightforward_tests()
 	ofstream f("ans1.txt");
 	ans.print(f);
 
+        //norm research
+        perebor(4, 4./h/h, met).print("norms_cool.txt");
+
 	//very clever processing
 
 	cout << "Clever case processing\n";
@@ -118,12 +131,15 @@ void straightforward_tests()
 	cout << "Differecnce in clever case= " << diff << "\n";
 	f = ofstream("ans2.txt");
 	ans.print(f);
+
+        //norm research
+        perebor(4, 4./h/h, met).print("norms_optimal.txt");
 }
 
 void stopping_tests()
 {
 	cout << "\n\nstopping_time__test\n\n";
-	size_t n = 500;
+        size_t n = 100;
 	matrix A = lagrange(n+1);
 	double h = 1. / (n + 1);
 	matrix x(n, 1); //proposed solution
@@ -192,4 +208,40 @@ void stopping_tests()
 	f = ofstream("ans2.txt");
 	ans.print(f);
 }
+
+double sf(double x, double tau) {
+    return 1 - x * tau;
+}
+
+double cumsf(double x, const method_tau &t) {
+    size_t n = t.size();
+    double a = 1;
+    for(size_t i = 0; i < n; i++) a*= sf(x, t[i]);
+    return fabs(a);
+}
+
+double max_norm_val(double a, double b, const method_tau &t) {
+    double ans = 0;
+    double r;
+    for(double c = a; c < b; c += 0.05) {
+       r = cumsf(c, t);
+       if(r > ans) ans = r;
+    }
+    return ans;
+}
+
+matrix perebor(double a, double b, const method_tau &t) {
+    method_tau g;
+    size_t n = t.size();
+    matrix m(n, n);
+    for(size_t i = 0; i < n; i++) {
+        for(size_t j = i; j < n; j++) {
+            g.push_back(t[i]);
+            m.set(i, j, max_norm_val(a, b, g));
+        }
+        g.clear();
+    }
+    return m;
+}
+
 

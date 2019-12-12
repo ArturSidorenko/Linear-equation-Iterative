@@ -56,6 +56,7 @@ public:
 	double get(size_t i, size_t j) const;
 	void set(size_t i, size_t j, double x);
 	void print(std::ofstream &s) const; //prints matrix to file
+	void print(const std::string &s) const; //does the same
 	size_t rows() const { return rows_; };
 	size_t cols() const { return cols_; };
 };
