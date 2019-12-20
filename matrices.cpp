@@ -3,8 +3,8 @@
 
 
 //=======================constructors and assginments=================
-matrix::matrix(size_t rows, size_t cols): 
-	rows_(rows), cols_(cols) 
+matrix::matrix(size_t rows, size_t cols) :
+	rows_(rows), cols_(cols)
 {
 	data_ = new double*[cols];
 	for (size_t i = 0; i < cols; i++) data_[i] = new double[rows];
@@ -25,7 +25,7 @@ matrix::matrix(const matrix &other) :
 	}
 }
 
-matrix::matrix(matrix &&other):
+matrix::matrix(matrix &&other) :
 	rows_(other.rows_), cols_(other.cols_)
 {
 	data_ = other.data_;
@@ -160,16 +160,16 @@ void matrix::set(size_t i, size_t j, double x) {
 void matrix::print(std::ofstream &s) const {
 	s << "\n============================\n";
 	for (size_t i = 0; i < rows_; i++) {
-		for(size_t j =0; j < cols_; j++)
-                        s << std::setw(10) << std::left << std::setprecision(2) << data_[j][i] << " ";
+		for (size_t j = 0; j < cols_; j++)
+			s << std::setw(10) << std::left << std::setprecision(4) << data_[j][i] << " ";
 		s << "\n";
 	}
 	s << "============================\n";
 }
 
 void matrix::print(const std::string &s) const {
-    std::ofstream f(s);
-    print(f);
+	std::ofstream f(s);
+	print(f);
 }
 
 double matrix::l1_norm() const
@@ -188,8 +188,8 @@ double matrix::l1_norm() const
 	for (size_t j = 1; j < cols_; j++)
 		if (c < maxes[j]) c = maxes[j];
 
-        delete [] maxes;
-        return c;
+	delete[] maxes;
+	return c;
 }
 
 double matrix::linf_norm() const
@@ -209,14 +209,14 @@ double matrix::linf_norm() const
 		if (c < maxes[i]) c = maxes[i];
 
 
-        delete [] maxes;
+	delete[] maxes;
 	return c;
 }
 
 matrix id(size_t n)
 {
 	matrix m(n, n);
-	for(size_t i = 0; i < n; i++) m.set(i, i, 1);
+	for (size_t i = 0; i < n; i++) m.set(i, i, 1);
 	return m;
 }
 
@@ -226,11 +226,11 @@ matrix lagrange(size_t N)
 	matrix M(N - 1, N - 1);
 
 	double h = 1. / N;
-	
+
 	for (size_t i = 0; i < N - 1; i++) {
 		M.set(i, i, 2. / (h*h));
-		if(i != 0)     M.set(i, i-1, -1. / (h*h));
-		if(i != (N-2)) M.set(i, i+1, -1. / (h*h));
+		if (i != 0)     M.set(i, i - 1, -1. / (h*h));
+		if (i != (N - 2)) M.set(i, i + 1, -1. / (h*h));
 	}
 	return M;
 }
@@ -260,7 +260,7 @@ matrix n_steps_method(const matrix & A, const matrix & X, const matrix &B, const
 
 	std::cout << "    Size of the array of taus = " << ord << "\n";
 
-        for (int g = 1; ; g++) {
+	for (int g = 1; ; g++) {
 		for (size_t i = 0; i < ord; i++) {
 			ans = ans - t[i] * A * ans + t[i] * B; //(I - t*A)*x + t*b
 		}
@@ -270,18 +270,21 @@ matrix n_steps_method(const matrix & A, const matrix & X, const matrix &B, const
 			std::cout << "    Iteration #" << g << ",res = " << res << "\n";
 			logs.push_back(res);
 			if (break_loop(logs)) break;
-                        if (g > 2) break;
+			if (g > 2) break;
 		}
 	}
 	return ans;
 }
 
-matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans)
+matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans, const std::string logname)
 {
 	matrix ans = X;
 	size_t ord = t.size();
 	sol_logs logs;
 	double diff;
+	std::ofstream f(logname);
+
+	f << "[\n";
 
 	std::cout << "    Size of the array of taus = " << ord << "\n";
 
@@ -290,22 +293,26 @@ matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, 
 			ans = ans - t[i] * A * ans + t[i] * B; //(I - t*A)*x + t*b
 		}
 
-		if (!(g % 100)) {
+		if (!(g % 10)) {
 			diff = (ans - true_ans).linf_norm();
 			std::cout << "    Iteration #" << g << ",L_inf diff = " << diff << "\n";
 			logs.push_back(diff);
-	
-                        if ((g > 10) || (diff < 10e-12) || (diff > 1e+15)) break;
+
+			f <<"[" <<g << " , " << diff << "],\n";
+
+			if ((g > 460) || (diff < 10e-12) || (diff > 1e+15)) break;
 		}
 	}
+
+	f << "]\n";
 	return ans;
 }
 
 bool break_loop(const sol_logs &g) {
-	
+
 	size_t s = g.size();
-	double cur = g[s-1];
-        if (cur > 1e+15) return true;
+	double cur = g[s - 1];
+	if (cur > 1e+15) return true;
 
 	if (s < 6) return false; //to avoid multiple errors caused by to lack of data to alanyse
 	double a = (g[s - 2] + g[s - 3] + g[s - 4]) / 3; //rolling average
@@ -322,7 +329,7 @@ permut clever_met(size_t t) {
 	else {
 		permut beg = clever_met(t - 1);
 		permut adv(beg.size() * 2);
-                for (size_t i = 0; i < beg.size(); i++) {
+		for (size_t i = 0; i < beg.size(); i++) {
 			adv[2 * i] = beg[i];
 			adv[2 * i + 1] = adv.size() - beg[i] - 1;
 		}

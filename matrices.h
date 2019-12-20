@@ -28,12 +28,12 @@ class matrix {
 	double **data_; //contents
 public:
 	//constructors
-	
+
 	matrix(size_t rows, size_t cols); //zero matrix constructor
 	matrix(const matrix &other); //copy construnctor
 	matrix(matrix &&other); //move constructor
 	~matrix();
-	
+
 
 	//operators =
 	matrix operator=(const matrix &other);
@@ -50,7 +50,7 @@ public:
 
 	//norms
 	double l1_norm() const;
-	double linf_norm() const;  
+	double linf_norm() const;
 
 	//access functions
 	double get(size_t i, size_t j) const;
@@ -64,7 +64,7 @@ public:
 //Identity matrix
 matrix id(size_t n);
 //Lagrange matrix constructor
-matrix lagrange(size_t N); 
+matrix lagrange(size_t N);
 
 //Chebyshev grid
 double cheb_grid(unsigned ord, unsigned i, double a, double b);
@@ -78,12 +78,9 @@ double inv_cheb_grid(unsigned ord, unsigned k, double a, double b);
 matrix n_steps_method(const matrix &A, const matrix &X, const matrix &B, const method_tau &t);
 
 //copy of the previous function to test convergence
-matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans);
+matrix test_n_steps_method(const matrix & A, const matrix & X, const matrix &B, const method_tau & t, const matrix &true_ans, const std::string logname);
 
 bool break_loop(const sol_logs &g);
 
 //very clever permutation of length = 2^t
 permut clever_met(size_t t);
-
-
-

@@ -17,7 +17,7 @@ int main() {
 	//plain_test();
 	try {
 		straightforward_tests();
-		stopping_tests();
+		//stopping_tests();
 	}
 	catch (const std::out_of_range &r) {
 		cerr << "RANGEERR: " << r.what() << "\n";
@@ -62,11 +62,12 @@ void straightforward_tests()
 	double h = 1. / (n + 1);
 	matrix x(n, 1); //proposed solution
 
+
 	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.5*i + 1);
 	matrix b = A * x; //proposed right hand of the equation
 
-	permut clever = clever_met(4);
-	size_t ord = clever.size(); //2^4
+	permut clever = clever_met(6);
+	size_t ord = clever.size(); 
 	method_tau met(ord);
 
 	//naive order
@@ -78,11 +79,13 @@ void straightforward_tests()
 	cout << "Difference before: " << (x0 - x).linf_norm() << "\n";
 
 	//norm research
-	perebor(4, 4. / h / h, met).print("norms_naive.txt");
+	cout << "Table of norms calculation...";
+	//perebor(4, 4. / h / h, met).print("norms_naive.txt");
+	cout << "done.\n";
 
 	matrix ans(n, 1);
 	try {
-		ans = test_n_steps_method(A, x0, b, met, x);
+		ans = test_n_steps_method(A, x0, b, met, x, "log_naive.txt");
 	}
 	catch (const std::invalid_argument &ups) {
 		cerr << "ERROR while solving: " << ups.what() << "\n";
@@ -100,7 +103,7 @@ void straightforward_tests()
 	}
 
 	try {
-		ans = test_n_steps_method(A, x0, b, met, x);
+		ans = test_n_steps_method(A, x0, b, met, x, "log_better.txt");
 	}
 	catch (const std::invalid_argument &ups) {
 		cerr << "ERROR while solving: " << ups.what() << "\n";
@@ -112,16 +115,16 @@ void straightforward_tests()
 	ans.print(f);
 
 	//norm research
-	perebor(4, 4. / h / h, met).print("norms_cool.txt");
+	//perebor(4, 4. / h / h, met).print("norms_cool.txt");
 
 	//very clever processing
 
 	cout << "Clever case processing\n";
 
-	for (size_t i = 0; i < ord; i++) met[clever[i]] = inv_cheb_grid(ord, n - i - 1, 4, 4. / h / h);
-
+	for (size_t i = 0; i < ord; i++)  met[clever[i]] = inv_cheb_grid(ord, ord - i - 1, 4, 4. / h / h);
+	
 	try {
-		ans = test_n_steps_method(A, x0, b, met, x);
+		ans = test_n_steps_method(A, x0, b, met, x, "log_opt.txt");
 	}
 	catch (const std::invalid_argument &ups) {
 		cerr << "ERROR while solving: " << ups.what() << "\n";
@@ -133,7 +136,7 @@ void straightforward_tests()
 	ans.print(f);
 
 	//norm research
-	perebor(4, 4. / h / h, met).print("norms_optimal.txt");
+	//perebor(4, 4. / h / h, met).print("norms_optimal.txt");
 }
 
 void stopping_tests()
@@ -147,8 +150,8 @@ void stopping_tests()
 	for (size_t i = 0; i < n; i++) x.set(i, 0, 0.5*i + 1);
 	matrix b = A * x; //proposed right hand of the equation
 
-	size_t ord = 64;
-	permut clever = clever_met(6);
+	permut clever = clever_met(5);
+	size_t ord = clever.size();
 	method_tau met(ord);
 
 	//naive order
@@ -243,4 +246,3 @@ matrix perebor(double a, double b, const method_tau &t) {
 	}
 	return m;
 }
-
